@@ -33,3 +33,11 @@ ros2 launch limo_simulation limo.launch.py # To launch the simulator
 1. This will not work with docker desktop, please do not use it, use the default engine.
 
 Feel free to modify anything else if it does not work as expected.
+
+### Connect to physical robot
+
+sudo apt install openssh-client
+
+sudo apt install openssh-server
+
+
