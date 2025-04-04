@@ -9,8 +9,17 @@
 #include "tf2/utils.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include <iostream>
+#include <math.h>
+#include <cmath>
 
 using namespace std::chrono_literals;
+
+
+double normalizeAngle(double angle) {
+  auto fac = fmod(angle, 2.0*M_PI);
+  if (fac < 0) return fac + 2.0*M_PI;
+  return fac;
+}
 
 class MinimalSubscriber : public rclcpp::Node
 {
@@ -29,7 +38,7 @@ public:
     std::cout << "Launched pd_controller" << std::endl;
 
     // Call on_timer function every second
-    timer_ = this->create_wall_timer(0.05s, std::bind(&MinimalSubscriber::on_timer, this));
+    timer_ = this->create_wall_timer(0.01s, std::bind(&MinimalSubscriber::on_timer, this));
 
     initial_rotation_gain = 0.5;
     route_rotation_gain = 0.05;
@@ -44,29 +53,33 @@ private:
     geometry_msgs::msg::Twist drive_cmd;
     drive_cmd.linear.x = 0.25;
     publisher_->publish(drive_cmd);
-    std::cout << "Drive: " << drive_cmd.linear.x << std::endl; 
+    std::cout << "Drive: " << drive_cmd.linear.x << std::endl;
   }
 
   void on_timer() {
-    geometry_msgs::msg::TransformStamped t = tf_buffer_->lookupTransform("limobot2/base_link", "goal", tf2::TimePointZero);
+    
+    geometry_msgs::msg::TransformStamped t = tf_buffer_->lookupTransform("goal", "limobot2/base_link", rclcpp::Time(0), rclcpp::Duration::from_seconds(0.1));
 
     geometry_msgs::msg::Twist msg;
 
     tf2::Quaternion yawQuat;
     tf2::fromMsg(t.transform.rotation,yawQuat);
-    auto yaw = tf2::getYaw(yawQuat);
+  
+    auto current_yaw = normalizeAngle(tf2::getYaw(yawQuat));
+    auto desired_yaw = normalizeAngle(atan(t.transform.translation.y/
+      t.transform.translation.x));
+    auto linear_error = std::hypot(t.transform.translation.x, t.transform.translation.y);
+    double angle_diff = (desired_yaw - current_yaw);
+    const double angle_threshold = 0.06; // 5 degrees in radians
 
-    double angle_diff = atan2(t.transform.translation.y,
-      t.transform.translation.x) - yaw;
+    std::cout << t.transform.translation.x << ", " << t.transform.translation.y << ", " << angle_diff << ", " << linear_error << std::endl;
 
-    const double angle_threshold = 0.01; // 5 degrees in radians
-    bool must_rotate = fabs(angle_diff) > angle_threshold;
-
-    std::cout << angle_diff << " " << atan2(t.transform.translation.y,
-      t.transform.translation.x) << yaw << std::endl;
-
-    if (must_rotate) {
-      msg.angular.z = 0.5 * angle_diff;
+    if (fabs(angle_diff) > angle_threshold && !has_oriented) {
+      msg.angular.z = 0.5*angle_diff;
+    } else {
+      has_oriented = true;
+      msg.angular.z = 0.05*angle_diff;
+      msg.linear.x = 0.5*linear_error;
     }
 
     publisher_->publish(msg);
@@ -83,6 +96,7 @@ private:
   double initial_rotation_gain;
   double route_rotation_gain;
   double translation_gain;
+  bool has_oriented = false;
 };
 
 int main(int argc, char *argv[])
