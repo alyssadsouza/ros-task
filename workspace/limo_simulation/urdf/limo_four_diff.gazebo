@@ -25,4 +25,36 @@
             <odom_publish_frequency>10</odom_publish_frequency>
         </plugin>
     </gazebo>
+
+    <!-- LiDAR sensor plugin -->
+    <gazebo reference="laser_link">
+        <sensor name="gpu_lidar" type="gpu_lidar">
+            <topic>/scan</topic>
+            <gz_frame_id>laser_link</gz_frame_id>
+            <update_rate>10</update_rate>
+            <ray>
+                <scan>
+                    <horizontal>
+                        <samples>360</samples>
+                        <resolution>1</resolution>
+                        <min_angle>-3.14159</min_angle>
+                        <max_angle>3.14159</max_angle>
+                    </horizontal>
+                    <vertical>
+                        <samples>1</samples>
+                        <resolution>1</resolution>
+                        <min_angle>0</min_angle>
+                        <max_angle>0</max_angle>
+                    </vertical>
+                </scan>
+                <range>
+                    <min>0.1</min>
+                    <max>10.0</max>
+                    <resolution>0.01</resolution>
+                </range>
+            </ray>
+            <always_on>1</always_on>
+            <visualize>true</visualize>
+        </sensor>
+    </gazebo>
 </robot>

@@ -75,4 +75,9 @@
     <xacro:limo_wheel parent_prefix="base_link" wheel_prefix="rear_right" reflect="-1">
         <origin xyz="${-wheelbase/2} ${-track/2} ${wheel_vertical_offset}" rpy="${M_PI} 0 0" />
     </xacro:limo_wheel>
+
+    <!-- LiDAR sensor -->
+    <xacro:limo_laser parent_prefix="base_link" frame_prefix="laser">
+        <origin xyz="0.0 0.0 0.08" rpy="0 0 0"/>
+    </xacro:limo_laser>
 </robot>

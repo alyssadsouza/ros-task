@@ -28,7 +28,7 @@ def generate_launch_description():
     gz_sim = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(join(gz_sim_share, "launch", "gz_sim.launch.py")),
         launch_arguments={
-            "gz_args" : PythonExpression(["'", world_file, " -r'"])
+            "gz_args" : PythonExpression(["'", world_file, " -r -s'"])
 
         }.items()
     )
@@ -71,7 +71,9 @@ def generate_launch_description():
             "/cmd_vel@geometry_msgs/msg/Twist@ignition.msgs.Twist",
             "/clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock",
             "/model/limobot/odometry@nav_msgs/msg/Odometry[ignition.msgs.Odometry",
-            "/world/empty_world/model/limobot/joint_state@sensor_msgs/msg/JointState[ignition.msgs.Model"
+            "/world/empty_world/model/limobot/joint_state@sensor_msgs/msg/JointState[ignition.msgs.Model",
+            "/tf@tf2_msgs/msg/TFMessage[ignition.msgs.Pose_V",
+            "/scan@sensor_msgs/msg/LaserScan[ignition.msgs.LaserScan"
         ],
         remappings=[
             ("/model/limobot/odometry", "/odom"),
