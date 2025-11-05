@@ -21,6 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             'simple_planner = darp_ros2.simple_planner_node:main',
+            'coordinate_converter_test = darp_ros2.coordinate_converter_test_node:main',
         ],
     },
 )

@@ -33,3 +33,9 @@ ros2 launch limo_simulation limo.launch.py # To launch the simulator
 1. This will not work with docker desktop, please do not use it, use the default engine.
 
 Feel free to modify anything else if it does not work as expected.
+
+### Working with DARP
+
+1. colcon build --packages-select darp_ros2 && source install/setup.bash
+2. ros2 run darp_ros2 simple_planner --ros-args -p visualize_darp:=true
+3. ros2 run darp_ros2 coordinate_converter_test
