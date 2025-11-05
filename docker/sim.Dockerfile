@@ -22,6 +22,12 @@ RUN apt-get install --no-install-recommends -y \
     ros-$ROS_DISTRO-cyclonedds \
     ros-$ROS_DISTRO-rmw-cyclonedds-cpp
 
+# Install packages via pip with exact DARP-compatible versions
+RUN pip3 install --no-cache-dir \
+    numba==0.55.0 \
+    scikit-learn==1.1.3 \
+    pygame==2.1.0
+
 # Use cyclone DDS by default
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 
@@ -33,7 +39,7 @@ ENV WORKSPACE_PATH=/root/workspace
 COPY workspace/ $WORKSPACE_PATH/src/
 
 RUN rosdep update && cd $WORKSPACE_PATH && \
-    rosdep install --from-paths src -y --ignore-src
+    rosdep install --from-paths src -y --ignore-src --skip-keys="ament_python"
 
 COPY scripts/setup/ /root/scripts/setup
 RUN /root/scripts/setup/workspace.sh
