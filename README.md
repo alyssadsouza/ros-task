@@ -36,11 +36,38 @@ Feel free to modify anything else if it does not work as expected.
 
 ### Working with DARP
 
-1. colcon build --packages-select darp_ros2 && source install/setup.bash
-2. ros2 run darp_ros2 simple_planner --ros-args -p visualize_darp:=true
-3. ros2 run darp_ros2 coordinate_converter_test
+Clone the repo (outside of the docker container):
 
-In terminal 1
+```
+cd root/workspace
+git clone https://github.com/alice-st/DARP darp_python
+```
+
+Now rebuild the docker container with `/scripts/deploy/devel.sh` and run the commands below.
+
+#### Build and run the DARP ROS node:
+
+```
+cd root/workspace
+# Build the ROS node
+colcon build --packages-select darp_ros2 && source install/setup.bash
+# Run the node
+ros2 run darp_ros2 simple_planner
+```
+
+#### Unit testing:
+```
+ros2 run darp_ros2 coordinate_converter_test
+```
+
+#### Run DARP with pygame visualization:
+```
+ros2 run darp_ros2 simple_planner --ros-args -p visualize_darp:=true
+```
+
+#### Dev workflow with Rviz:
+
+In terminal 1:
 ```
 cd /home/ubuntu/Documents/ros-task/workspace
 source /opt/ros/humble/setup.bash
@@ -48,7 +75,7 @@ source install/setup.bash
 ros2 run darp_ros2 simple_planner
 ```
 
-In terminal 2
+In terminal 2:
 ```
 source /opt/ros/humble/setup.bash
 source install/setup.bash
@@ -56,7 +83,7 @@ ros2 topic hz /coverage_path
 ros2 topic echo /coverage_path --once
 ```
 
-In terminal 3
+In terminal 3:
 ```
 rviz2
 ```
