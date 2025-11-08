@@ -120,18 +120,29 @@ class CoordinateConverterTestNode(Node):
             self._assert_equal(observed, expected_cell, msg=f'meters_to_cell({x}, {y})')
 
     def _check_subcell_to_meters(self) -> None:
-        """Confirm subcell coordinates collapse to matching cell centers."""
-        cell_row, cell_col = 2, 3
-        subcells = [
-            (cell_row * 2, cell_col * 2),
-            (cell_row * 2 + 1, cell_col * 2),
-            (cell_row * 2, cell_col * 2 + 1),
-            (cell_row * 2 + 1, cell_col * 2 + 1),
+        """Verify subcells map to unique half-cell resolution positions (0.5m grid)."""
+        # Test that adjacent subcells differ by 0.5m
+        test_cases = [
+            # Subcells in same cell (4, 5) should have different positions
+            ((8, 10), (0.25, 0.75)),   # Top-left subcell of cell (4, 5)
+            ((9, 10), (0.25, 0.25)),   # Bottom-left subcell of cell (4, 5)
+            ((8, 11), (0.75, 0.75)),   # Top-right subcell of cell (4, 5)
+            ((9, 11), (0.75, 0.25)),   # Bottom-right subcell of cell (4, 5)
+            # Corner subcells
+            ((0, 0), (-4.75, 4.75)),   # Top-left corner
+            ((1, 0), (-4.75, 4.25)),   # One down from top-left
+            ((19, 19), (4.75, -4.75)), # Bottom-right corner
         ]
-        expected = self.converter.cell_to_meters(cell_row, cell_col)
-        for subcell in subcells:
-            observed = self.converter.subcell_to_meters(*subcell)
-            self._assert_close(observed, expected, msg=f'subcell_to_meters{subcell}')
+        for (subcell_row, subcell_col), expected_pos in test_cases:
+            observed = self.converter.subcell_to_meters(subcell_row, subcell_col)
+            self._assert_close(observed, expected_pos,
+                             msg=f'subcell_to_meters({subcell_row}, {subcell_col})')
+
+        # Verify adjacent subcells are 0.5m apart
+        x1, y1 = self.converter.subcell_to_meters(8, 10)
+        x2, y2 = self.converter.subcell_to_meters(9, 10)
+        self._assert_close((abs(y2 - y1),), (0.5,),
+                          msg='Adjacent subcells should be 0.5m apart')
 
     def _check_round_trip_consistency(self) -> None:
         """Ensure mapToWorld/worldToMap round-trip integrity for representative cells."""

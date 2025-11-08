@@ -133,12 +133,15 @@ class CoordinateConverter:
 
     def subcell_to_meters(self, subcell_row: int, subcell_col: int) -> Tuple[float, float]:
         """
-        Convert DARP subcell coordinates to ROS map coordinates.
+        Convert DARP subcell coordinates to ROS map coordinates at half-cell resolution.
 
         CRITICAL: DARP uses 2x resolution for path coordinates!
-        - A 10x10 grid has 20x20 subcells for paths
-        - Subcell (0, 2) corresponds to grid cell (0, 1)
-        - Must divide by 2 to get actual grid cell
+        - A 10x10 grid has 20x20 subcells (each subcell is 0.5m × 0.5m)
+        - Each subcell represents its own position, NOT collapsed to parent cell center
+        - Subcells (8,10) and (9,10) are in the same cell but at DIFFERENT positions
+
+        Uses REP-103 mapToWorld formula:
+            position = origin + (index + 0.5) * resolution
 
         Args:
             subcell_row: DARP subcell row index (0 to 2*grid_rows-1)
@@ -148,19 +151,28 @@ class CoordinateConverter:
             (x, y): Position in meters in ROS map frame
 
         Example:
-            >>> converter = CoordinateConverter(10, 10, 0.5)
-            >>> # Subcell (0, 2) should map to cell (0, 1)
-            >>> x, y = converter.subcell_to_meters(0, 2)
-            >>> expected_x, expected_y = converter.cell_to_meters(0, 1)
-            >>> assert abs(x - expected_x) < 1e-9
-            >>> assert abs(y - expected_y) < 1e-9
+            >>> converter = CoordinateConverter(10, 10, 1.0, -5.0, -5.0)
+            >>> # Subcells in same cell should differ by 0.5m
+            >>> x1, y1 = converter.subcell_to_meters(8, 10)  # (0.25, 0.75)
+            >>> x2, y2 = converter.subcell_to_meters(9, 10)  # (0.25, 0.25)
+            >>> assert abs(x1 - x2) < 1e-9  # Same column
+            >>> assert abs(abs(y1 - y2) - 0.5) < 1e-9  # 0.5m apart
         """
-        # Convert from 2x resolution to grid cell
-        row = subcell_row // 2
-        col = subcell_col // 2
+        # Subcell resolution is half the cell size
+        subcell_resolution = self.cell_size / 2.0
 
-        # Use normal cell-to-meters conversion (includes Y-flip)
-        return self.cell_to_meters(row, col)
+        # Total subcell rows for Y-axis flip
+        total_subcell_rows = self.grid_rows * 2
+
+        # X coordinate (no flip): origin + (index + 0.5) * resolution
+        x = self.origin_x + (subcell_col + 0.5) * subcell_resolution
+
+        # Y coordinate (flip for ROS convention): bottom-to-top
+        # DARP row 0 = top → ROS row (total_rows - 1)
+        # DARP row (total_rows - 1) = bottom → ROS row 0
+        y = self.origin_y + ((total_subcell_rows - 1) - subcell_row + 0.5) * subcell_resolution
+
+        return (x, y)
 
     def meters_to_cell(self, x: float, y: float) -> Tuple[int, int]:
         """

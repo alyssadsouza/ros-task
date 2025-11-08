@@ -39,3 +39,29 @@ Feel free to modify anything else if it does not work as expected.
 1. colcon build --packages-select darp_ros2 && source install/setup.bash
 2. ros2 run darp_ros2 simple_planner --ros-args -p visualize_darp:=true
 3. ros2 run darp_ros2 coordinate_converter_test
+
+In terminal 1
+```
+cd /home/ubuntu/Documents/ros-task/workspace
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+ros2 run darp_ros2 simple_planner
+```
+
+In terminal 2
+```
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+ros2 topic hz /coverage_path
+ros2 topic echo /coverage_path --once
+```
+
+In terminal 3
+```
+rviz2
+```
+
+- Click "Add" button
+- Select "By topic" tab
+- Find /coverage_path → Path
+
