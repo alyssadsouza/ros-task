@@ -1,0 +1,21 @@
+smoother_server:
+  ros__parameters:
+    use_sim_time: true
+    smoother_plugins: ["ConstrainedSmoother"]
+    ConstrainedSmoother:
+      plugin: "nav2_constrained_smoother/ConstrainedSmoother"
+      w_curve: 0.0
+      w_dist: 0.5                   # bind to original path
+      w_smooth: 1.0
+      w_cost: 0.0
+      path_downsampling_factor: 1   # already downsampled in planner
+      path_upsampling_factor: 1
+      maximum_curvature: 5.0
+      minimum_turning_radius: 0.0   # differential drive
+      smoothing_duration: 2.0
+      max_its: 1                    # SINGLE ITERATION ONLY
+      tolerance: 1.0                # very relaxed
+      keep_start_orientation: true
+      keep_goal_orientation: true
+      costmap_topic: ""
+      footprint_topic: ""

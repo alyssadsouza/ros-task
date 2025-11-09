@@ -178,7 +178,18 @@ class SimpleDARPNode(Node):
         for pose in self.path_msg.poses:
             pose.header.stamp = now
 
-        self.path_publisher.publish(self.path_msg)
+        # EXTREME downsample for ARM64 testing: every 100th waypoint (~5 from 401)
+        path_downsampled = Path()
+        path_downsampled.header = self.path_msg.header
+        path_downsampled.poses = self.path_msg.poses[::100]
+
+        self.get_logger().info(
+            f'Publishing EXTREME downsampled path: {len(path_downsampled.poses)} poses '
+            f'(from original {len(self.path_msg.poses)})',
+            throttle_duration_sec=5.0
+        )
+
+        self.path_publisher.publish(path_downsampled)
 
     def run_darp(self):
         """
