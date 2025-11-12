@@ -12,6 +12,15 @@
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
 
+  <!-- Nav2 controller dependencies -->
+  <depend>nav2_controller</depend>
+  <depend>nav2_regulated_pure_pursuit_controller</depend>
+  <depend>nav2_lifecycle_manager</depend>
+  <depend>nav2_costmap_2d</depend>
+  <depend>nav2_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
+
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
