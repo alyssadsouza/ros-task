@@ -17,7 +17,7 @@ We need to run the simulation software on Linux because of dependencies that are
 git clone https://github.com/alyssadsouza/ros-task
 ```
 
-> 💡 This repository should already be cloned on the EC2 instance. We’re currently working on the `darp_setup` branch.
+> 💡 This repository should already be cloned on the EC2 instance.
 
 ## Setup simulator
 
