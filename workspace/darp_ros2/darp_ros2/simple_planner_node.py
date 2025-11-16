@@ -20,6 +20,9 @@ else:
 
 import rclpy
 from rclpy.node import Node
+from rclpy.action import ActionClient
+
+from nav2_msgs.action import FollowPath
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
 
@@ -77,11 +80,12 @@ class SimpleDARPNode(Node):
         )
 
         # Create path publisher
-        self.path_publisher = self.create_publisher(Path, 'coverage_path', 10)
+        # self.path_publisher = self.create_publisher(Path, 'coverage_path', 10)
+        self.follow_path_client = ActionClient(self, FollowPath, 'follow_path')
 
-        # Store path for continuous republishing
-        self.path_msg = None
-        self.republish_timer = None
+        # # Store path for continuous republishing
+        # self.path_msg = None
+        # self.republish_timer = None
 
         self.get_logger().info(
             f'DARP Planner initialized: {self.grid_size}x{self.grid_size} grid, '
@@ -167,18 +171,18 @@ class SimpleDARPNode(Node):
         self.get_logger().info(f'DEBUG: path.poses has {len(path.poses)} items before returning')
         return path
 
-    def publish_path_with_timestamp(self):
-        """Publish stored path with current timestamp."""
-        if self.path_msg is None:
-            return
+    # def publish_path_with_timestamp(self):
+    #     """Publish stored path with current timestamp."""
+    #     if self.path_msg is None:
+    #         return
 
-        # Update timestamps to current time
-        now = self.get_clock().now().to_msg()
-        self.path_msg.header.stamp = now
-        for pose in self.path_msg.poses:
-            pose.header.stamp = now
+    #     # Update timestamps to current time
+    #     now = self.get_clock().now().to_msg()
+    #     self.path_msg.header.stamp = now
+    #     for pose in self.path_msg.poses:
+    #         pose.header.stamp = now
 
-        self.path_publisher.publish(self.path_msg)
+    #     self.path_publisher.publish(self.path_msg)
 
     def run_darp(self):
         """
@@ -221,7 +225,8 @@ class SimpleDARPNode(Node):
 
             # Create and publish path
             self.path_msg = self.create_path_message(planner, robot_idx=0)
-            self.publish_path_with_timestamp()
+            # self.publish_path_with_timestamp()
+            self.send_path_to_nav2(self.path_msg)
 
             self.get_logger().info(
                 f'✓ Published coverage path: {len(self.path_msg.poses)} waypoints, '
@@ -229,12 +234,45 @@ class SimpleDARPNode(Node):
             )
 
             # Set up continuous republishing for RViz (1 Hz)
-            self.republish_timer = self.create_timer(1.0, self.publish_path_with_timestamp)
+            # self.republish_timer = self.create_timer(1.0, self.publish_path_with_timestamp)
 
         except Exception as e:
             self.get_logger().error(f'DARP planning failed: {e}')
             import traceback
             traceback.print_exc()
+    
+    def send_path_to_nav2(self, path_msg):
+        """Send coverage path directly as follow_path goal"""
+        
+        # Wait for action server
+        if not self.follow_path_client.wait_for_server(timeout_sec=5.0):
+            self.get_logger().error('follow_path action server not available!')
+            return
+        
+        # Create goal
+        goal = FollowPath.Goal()
+        goal.path = path_msg
+        
+        self.get_logger().info(f'Sending coverage path to Nav2: {len(path_msg.poses)} waypoints')
+        
+        # Send goal
+        self.follow_path_client.send_goal_async(goal).add_done_callback(
+            self.goal_response_callback)
+
+    def goal_response_callback(self, future):
+        """Handle goal response"""
+        goal_handle = future.result()
+        if not goal_handle.accepted:
+            self.get_logger().error('Goal rejected by controller')
+            return
+        
+        self.get_logger().info('✓ Goal accepted! Robot following coverage path')
+        goal_handle.get_result_async().add_done_callback(self.result_callback)
+
+    def result_callback(self, future):
+        """Handle execution result"""
+        result = future.result()
+        self.get_logger().info('✓✓✓ Coverage path execution SUCCEEDED!')
 
 
 def main(args=None):
